@@ -6,6 +6,8 @@ from .utils import db
 from .models.urls import Url
 from .models.users import User
 from .models.blocklist import TokenBlocklist
+from .auth.views import auth_namespace
+from flask_jwt_extended import JWTManager
 
 from .config import config_dict
 
@@ -22,5 +24,10 @@ def create_app(config=config_dict["dev"]):
         description="A simple URL shortening REST API service",
     )
 
+    api.add_namespace(auth_namespace)
+
     migrate = Migrate(app, db)
+
+    jwt = JWTManager(app)
+
     return app
