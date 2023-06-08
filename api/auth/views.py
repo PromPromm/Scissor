@@ -1,5 +1,5 @@
 from flask_restx import Namespace, Resource, fields
-from flask import request
+from flask import request, abort
 from ..models.users import User
 from ..models.blocklist import TokenBlocklist
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -13,6 +13,7 @@ from flask_jwt_extended import (
 )
 from ..utils import db
 from datetime import timezone, datetime
+import validators
 
 auth_namespace = Namespace("auth", "Namespace for authentication")
 
@@ -46,6 +47,10 @@ class SignUp(Resource):
         Register a user
         """
         data = request.get_json()
+
+        if not validators.email(data.get("email")):
+            abort(400, "Email is not valid")
+
         user = User.query.filter_by(email=data.get("email")).first()
         user_name = User.query.filter_by(username=data.get("username")).first()
 
@@ -99,7 +104,7 @@ class Login(Resource):
                 "access_token": access_token,
                 "refresh_token": refresh_token,
             }, HTTPStatus.OK
-        return {"Error": "Invalid credentials"}, HTTPStatus.UNAUTHORIZED
+        return {"Error": "Invalid credentials"}, HTTPStatus.FORBIDDEN
 
 
 @auth_namespace.route("/logout")
