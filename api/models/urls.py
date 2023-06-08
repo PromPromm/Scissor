@@ -15,3 +15,14 @@ class Url(db.Model):
 
     def __repr__(self):
         return f"<URL {self.name}>"
+
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
+
+    @classmethod
+    def get_by_key(cls, key):
+        """
+        A function to get a url instance by key
+        """
+        return cls.query.filter_by(key=key).first()

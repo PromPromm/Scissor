@@ -13,7 +13,7 @@ url_model = user_namespace.model(
         "id": fields.Integer(),
         "name": fields.String(description="Name of shortened url"),
         "key": fields.String(description="Shortened url key"),
-        "target url": fields.String(description="Target URL"),
+        "target_url": fields.String(description="Target URL"),
         "clicks": fields.Integer(),
         "user_id": fields.Integer(),
     },
@@ -111,7 +111,7 @@ class UserURLsList(Resource):
     @jwt_required()
     @user_namespace.marshal_list_with(url_model)
     @user_namespace.doc(
-        description="Get the shortened urls a user has created",
+        description="Get all the shortened urls a user has created",
         params={"user_id": "The user id"},
     )
     def get(self, user_id):
@@ -121,3 +121,20 @@ class UserURLsList(Resource):
         user = User.get_by_id(user_id)
         urls = user.urls
         return urls, HTTPStatus.OK
+
+
+@user_namespace.route("/<int:user_id>/paid")
+class PaidUserView(Resource):
+    @user_namespace.doc(
+        description="Give a user paid user privileges. Can be accessed by only an admin",
+        params={"user_id": "The user id"},
+    )
+    @jwt_required()
+    def patch(self, user_id):
+        """
+        Give a user paid user privileges.
+        """
+        user = User.get_by_id(user_id)
+        user.paid = True
+        db.session.commit()
+        return {"Message": "Now a paid user"}, HTTPStatus.OK
