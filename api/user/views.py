@@ -5,6 +5,8 @@ from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from http import HTTPStatus
 from ..utils import db
 
+from flask import current_app as app
+
 user_namespace = Namespace("user", "Namespace for user")
 
 url_model = user_namespace.model(
@@ -69,7 +71,9 @@ class UserView(Resource):
         staff = User.get_by_id(admin_id)
         if staff.is_admin:
             user = User.get_by_id(user_id)
+            app.logger.info(f"Admin got a user's details")
             return user, HTTPStatus.OK
+        app.logger.warning(f"Non admin tried to get a user's details")
         return {"Error": "NOT ALLOWED"}, HTTPStatus.UNAUTHORIZED
 
     @jwt_required(fresh=True)
@@ -86,7 +90,9 @@ class UserView(Resource):
         if user.is_admin:
             db.session.delete(User.get_by_id(user_id))
             db.session.commit()
+            app.logger.info(f"Admin deleted user {User.get_by_id(user_id).username}")
             return {"message": "User deleted successfully"}, HTTPStatus.OK
+        app.logger.warning(f"Non admin tried to delete a user")
         return {"Error": "NOT ALLOWED"}, HTTPStatus.UNAUTHORIZED
 
     @jwt_required()
@@ -103,6 +109,7 @@ class UserView(Resource):
             abort(401, "Admin privilege only")
         user = User.get_by_id(user_id)
         user.make_admin()
+        app.logger.info("Super Admin gave a user admin privilege")
         return {"messsage": "User is now an admin"}, HTTPStatus.OK
 
 
@@ -120,6 +127,7 @@ class UserURLsList(Resource):
         """
         user = User.get_by_id(user_id)
         urls = user.urls
+        app.logger.info(f"Admin searched for all urls by {user.username}")
         return urls, HTTPStatus.OK
 
 
@@ -137,4 +145,5 @@ class PaidUserView(Resource):
         user = User.get_by_id(user_id)
         user.paid = True
         db.session.commit()
+        app.logger.info(f"User {user.username} paid for a subsription plan")
         return {"Message": "Now a paid user"}, HTTPStatus.OK

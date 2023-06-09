@@ -14,6 +14,36 @@ from decouple import config as configuration
 
 from .config import config_dict
 
+from logging.config import dictConfig
+
+dictConfig(
+    {
+        "version": 1,
+        "formatters": {
+            "default": {
+                "format": "[%(asctime)s] %(levelname)s in %(module)s: %(message)s",
+                "datefmt": "%B %d, %Y %H:%M:%S %Z",
+            }
+        },
+        "handlers": {
+            "time-rotate": {
+                "class": "logging.handlers.TimedRotatingFileHandler",
+                "filename": "urlshortener.log",
+                "when": "D",
+                "interval": 10,
+                "backupCount": 5,
+                "formatter": "default",
+            },
+            "file": {
+                "class": "logging.FileHandler",
+                "filename": "flask.log",
+                "formatter": "default",
+            },
+        },
+        "root": {"level": "INFO", "handlers": ["time-rotate"]},
+    }
+)
+
 
 def create_app(config=config_dict["dev"]):
     app = Flask(__name__)

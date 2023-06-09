@@ -15,6 +15,8 @@ from ..utils import db
 from datetime import timezone, datetime
 import validators
 
+from flask import current_app as app
+
 auth_namespace = Namespace("auth", "Namespace for authentication")
 
 signup_model = auth_namespace.model(
@@ -55,8 +57,12 @@ class SignUp(Resource):
         user_name = User.query.filter_by(username=data.get("username")).first()
 
         if user:
+            app.logger.info(f"Someone tried to sign up with existing email")
             return {"Error": "User exists"}, HTTPStatus.CONFLICT
         if user_name:
+            app.logger.info(
+                f"Someone tried to sign up with a username already taken by someone else"
+            )
             return {"message": "Username already in use"}, HTTPStatus.CONFLICT
         new_user = User(
             username=data.get("username"),
@@ -66,6 +72,7 @@ class SignUp(Resource):
             last_name=data.get("last_name"),
         )
         new_user.save()
+        app.logger.info(f"User {new_user.username} signed up")
         return {"message": "User successfully created"}, HTTPStatus.CREATED
 
 
@@ -91,6 +98,7 @@ class Login(Resource):
                 refresh_token = create_refresh_token(
                     identity=user.id, additional_claims={"is_administrator": True}
                 )
+                app.logger.info(f"Admin {user.username} logged in")
             else:
                 access_token = create_access_token(
                     identity=user.id,
@@ -100,10 +108,12 @@ class Login(Resource):
                 refresh_token = create_refresh_token(
                     identity=user.id, additional_claims={"is_administrator": False}
                 )
+                app.logger.info(f"User {user.username} logged in")
             return {
                 "access_token": access_token,
                 "refresh_token": refresh_token,
             }, HTTPStatus.OK
+        app.logger.info("User tried to login with incorrect details")
         return {"Error": "Invalid credentials"}, HTTPStatus.FORBIDDEN
 
 
@@ -116,9 +126,11 @@ class Logout(Resource):
         Logout a user and blacklist jwt token
         """
         jti = get_jwt()["jti"]
+        user = User.get_by_id(get_jwt_identity())
         token = TokenBlocklist(jti=jti, created_at=datetime.now(timezone.utc))
         db.session.add(token)
         db.session.commit()
+        app.logger.info(f"{user.username} logged out")
         return {"message": "User successfully logged out"}
 
 
@@ -138,8 +150,10 @@ class Refresh(Resource):
                 fresh=False,
                 additional_claims={"is_administrator": True},
             )
+            app.logger.info(f"Admin {user.username} got a jwt refresh token")
             return {"access_token": access_token}, HTTPStatus.OK
         access_token = create_access_token(
             identity=user_id, fresh=False, additional_claims={"is_administrator": False}
         )
+        app.logger.info(f"User {user.username} got a jwt refresh token")
         return {"access_token": access_token}, HTTPStatus.OK

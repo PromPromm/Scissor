@@ -9,6 +9,8 @@ import validators
 import qrcode
 import io
 
+from flask import current_app as app
+
 url_namespace = Namespace("url", "Namespace for urls")
 
 url_model = url_namespace.model(
@@ -54,6 +56,7 @@ class CreateURLView(Resource):
             )
         url.user_id = user_id
         url.save()
+        app.logger.info(f"{user.username} shortened a url")
         return {"message": "URL CREATED"}, HTTPStatus.OK
 
 
@@ -70,6 +73,7 @@ class RedirectURLView(Resource):
         if url:
             url.clicks += 1
             db.session.commit()
+            app.logger.info(f"{url.key} got a redirect")
             return redirect(url.target_url)
         return {"message": "NOT FOUND"}, HTTPStatus.NOT_FOUND
 
@@ -86,6 +90,7 @@ class RedirectURLView(Resource):
         if url:
             url.is_active = False
             db.session.commit()
+            app.logger.info(f"{url.key} was deleted by (user)")
             return {"message": "Url has been deleted"}, HTTPStatus.OK
         return {"message": "NOT FOUND"}, HTTPStatus.NOT_FOUND
 
@@ -103,5 +108,6 @@ class QRCodeGenerationView(Resource):
             img.save(buffer)
             buffer.seek(0)
             response = send_file(buffer, mimetype="image/png")
+            app.logger.info(f"Qrcode for {url_key} was generated")
             return response
         return {"message": "NOT FOUND"}, HTTPStatus.NOT_FOUND
