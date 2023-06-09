@@ -1,11 +1,13 @@
 from flask_restx import Namespace, Resource, fields
-from flask import abort, request, redirect
+from flask import abort, request, redirect, send_file
 from ..models.users import User
 from ..models.urls import Url
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from http import HTTPStatus
 from ..utils import db, generate_url_key
 import validators
+import qrcode
+import io
 
 url_namespace = Namespace("url", "Namespace for urls")
 
@@ -85,4 +87,21 @@ class RedirectURLView(Resource):
             url.is_active = False
             db.session.commit()
             return {"message": "Url has been deleted"}, HTTPStatus.OK
+        return {"message": "NOT FOUND"}, HTTPStatus.NOT_FOUND
+
+
+@url_namespace.route("/<string:url_key>/qrcode")
+class QRCodeGenerationView(Resource):
+    def post(self, url_key):
+        url = Url.get_by_key(url_key)
+        if url:
+            qr = qrcode.QRCode(version=1, box_size=10, border=5)
+            qr.add_data(url.target_url)
+            qr.make(fit=True)
+            img = qr.make_image(fill_color="blue", back_color="white")
+            buffer = io.BytesIO()
+            img.save(buffer)
+            buffer.seek(0)
+            response = send_file(buffer, mimetype="image/png")
+            return response
         return {"message": "NOT FOUND"}, HTTPStatus.NOT_FOUND

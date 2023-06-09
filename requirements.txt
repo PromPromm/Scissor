@@ -18,9 +18,11 @@ jsonschema==4.17.3
 Mako==1.2.4
 MarkupSafe==2.1.2
 PyJWT==2.7.0
+pypng==0.20220715.0
 pyrsistent==0.19.3
 python-decouple==3.8
 pytz==2023.3
+qrcode==7.4.2
 SQLAlchemy==2.0.15
 typing_extensions==4.6.3
 validators==0.20.0
