@@ -1,5 +1,5 @@
 from flask_restx import Namespace, Resource, fields
-from flask import request, abort
+from flask import request, abort, url_for
 from ..models.users import User
 from ..models.blocklist import TokenBlocklist
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -11,9 +11,10 @@ from flask_jwt_extended import (
     get_jwt_identity,
     get_jwt,
 )
-from ..utils import db
+from ..utils import db, generate_confirmation_token, mail
 from datetime import timezone, datetime
 import validators
+from flask_mail import Message
 
 from flask import current_app as app
 
@@ -37,6 +38,20 @@ login_model = auth_namespace.model(
         "password": fields.String(required=True, description="Password"),
     },
 )
+
+
+def send_register_email(user, confirm_url):
+    msg = Message(
+        "Scissor-Please confirm your email",
+        sender="noreply@demo.com",
+        recipients=[user.email],
+        body=f"Welcome to Scissor.Your account with username {user.username} has been created successfully."
+        "Welcome! Thanks for signing up. Please follow this link to activate your account:"
+        f"<a href='{confirm_url}'>Confirm Email</a>"
+        "<br>"
+        "<p>Cheers!</p>",
+    )
+    mail.send(msg)
 
 
 @auth_namespace.route("/signup")
@@ -70,8 +85,19 @@ class SignUp(Resource):
             password=generate_password_hash(data.get("password")),
             first_name=data.get("first_name"),
             last_name=data.get("last_name"),
+            confirmed=False,
         )
-        new_user.save()
+        db.session.add(new_user)
+        token = generate_confirmation_token(new_user.email)
+        confirm_url = url_for(
+            "user_confirm_email_view",
+            token=token,
+            _external=True,
+            _method="PATCH",
+        )
+        send_register_email(new_user, confirm_url)
+        app.logger.info(f"Sign up email was sent to User {new_user.username}")
+        db.session.commit()
         app.logger.info(f"User {new_user.username} signed up")
         return {"message": "User successfully created"}, HTTPStatus.CREATED
 

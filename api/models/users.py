@@ -13,6 +13,8 @@ class User(db.Model):
     is_admin = db.Column(db.Boolean, default=False)
     paid = db.Column(db.Boolean, default=False)
     date_created = db.Column(db.DateTime, default=datetime.utcnow())
+    confirmed = db.Column(db.Boolean, nullable=False, default=False)
+    confirmed_on = db.Column(db.DateTime, nullable=True)
     urls = db.relationship("Url", backref="user", lazy=True)
 
     def __repr__(self):

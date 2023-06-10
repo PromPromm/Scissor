@@ -3,7 +3,8 @@ from flask import abort
 from ..models.users import User
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from http import HTTPStatus
-from ..utils import db
+from ..utils import db, confirm_token
+from datetime import datetime
 
 from flask import current_app as app
 
@@ -147,3 +148,27 @@ class PaidUserView(Resource):
         db.session.commit()
         app.logger.info(f"User {user.username} paid for a subsription plan")
         return {"Message": "Now a paid user"}, HTTPStatus.OK
+
+
+@user_namespace.route("/confirm/<token>")
+class ConfirmEmailView(Resource):
+    @user_namespace.doc(
+        description="Confirms a user email.",
+        params={"token": "The token contained the url sent to the user's email"},
+    )
+    def patch(self, token):
+        """
+        Confirm user email
+        """
+        if confirm_token(token):
+            email = confirm_token(token)
+            user = User.query.filter_by(email=email).first_or_404()
+            if user.confirmed:
+                return {"message": "Account already confirmed"}, HTTPStatus.OK
+            user.confirmed = True
+            user.confirmed_on = datetime.now()
+            db.session.commit()
+            return {
+                "message": "You have successfully confirmed your account. Thanks!"
+            }, HTTPStatus.OK
+        return {"Error": "The confirmation link is invalid or has expired."}, 498

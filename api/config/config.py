@@ -17,6 +17,12 @@ class Config:
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=30)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(minutes=30)
     JWT_SECRET_KEY = config("JWT_SECRET_KEY", "topsecret")
+    MAIL_SERVER = "smtp.googlemail.com"
+    MAIL_PORT = 587
+    MAIL_USE_TLS = True
+    MAIL_USERNAME = os.environ.get("MAIL_USERNAME")
+    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD")
+    SECURITY_PASSWORD_SALT = config("SECURITY_PASSWORD_SALT", "secure-password-salt")
 
 
 class DevConfig(Config):

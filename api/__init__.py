@@ -2,7 +2,7 @@ from flask import Flask
 from flask_restx import Api
 from .utils import db
 from flask_migrate import Migrate
-from .utils import db
+from .utils import db, mail
 from .models.urls import Url
 from .models.users import User
 from .models.blocklist import TokenBlocklist
@@ -62,6 +62,8 @@ def create_app(config=config_dict["dev"]):
     api.add_namespace(url_namespace)
 
     migrate = Migrate(app, db)
+
+    mail.init_app(app)
 
     jwt = JWTManager(app)
 
