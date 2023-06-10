@@ -82,22 +82,35 @@ class RedirectURLView(Resource):
         params={"url_key": "The shortened url key"},
     )
     @jwt_required()
+    @url_namespace.doc(
+        description="Delete a URL", params={"url_key": "The shortened url key"}
+    )
     def delete(self, url_key):
         """
         Delete a url
         """
+        identity = get_jwt_identity()
+        jwt_user = User.get_by_id(identity)
         url = Url.get_by_key(url_key)
         if url:
-            url.is_active = False
-            db.session.commit()
-            app.logger.info(f"{url.key} was deleted by (user)")
-            return {"message": "Url has been deleted"}, HTTPStatus.OK
+            if (jwt_user.is_admin == True) or (identity == url.user_id):
+                url.is_active = False
+                db.session.commit()
+                app.logger.info(f"{url.key} was deleted by (user)")
+                return {"message": "Url has been deleted"}, HTTPStatus.OK
+            return {"message": "Not allowed."}, HTTPStatus.FORBIDDEN
         return {"message": "NOT FOUND"}, HTTPStatus.NOT_FOUND
 
 
 @url_namespace.route("/<string:url_key>/qrcode")
 class QRCodeGenerationView(Resource):
+    @url_namespace.doc(
+        description="Generate QRCode", params={"url_key": "The shortened url key"}
+    )
     def post(self, url_key):
+        """
+        Generate qrcode for shortened url
+        """
         url = Url.get_by_key(url_key)
         if url:
             qr = qrcode.QRCode(version=1, box_size=10, border=5)

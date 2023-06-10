@@ -57,7 +57,6 @@ def send_register_email(user, confirm_url):
 @auth_namespace.route("/signup")
 class SignUp(Resource):
     @auth_namespace.expect(signup_model)
-    # @auth_namespace.marshal_with(signup_model, HTTPStatus.OK)
     @auth_namespace.doc(description="Sign up on Scissor")
     def post(self):
         """

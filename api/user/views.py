@@ -1,12 +1,13 @@
-from flask_restx import Namespace, Resource, fields
-from flask import abort, request, url_for
+from flask_restx import Namespace, Resource, fields, marshal
+from flask import request, url_for
 from ..models.users import User
-from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from http import HTTPStatus
-from ..utils import db, confirm_token, mail
+from ..utils import db, confirm_token, mail, admin_required, super_admin_required
 from datetime import datetime
 from flask_mail import Message
 from werkzeug.security import generate_password_hash
+from decouple import config as configuration
 
 from flask import current_app as app
 
@@ -83,60 +84,57 @@ def reset_password_email(user):
 
 @user_namespace.route("/")
 class UserList(Resource):
-    @user_namespace.marshal_with(user_model)
     @user_namespace.doc(
         description="Get all registered users. Can be accessed by only an admin"
     )
-    @jwt_required()
+    @admin_required()
     def get(self):
         """
         Get all users
         """
         users = User.query.all()
-        return users, HTTPStatus.OK
+        return marshal(users, user_model), 200
 
 
 @user_namespace.route("/<int:user_id>")
 class UserView(Resource):
-    @jwt_required()
-    @user_namespace.marshal_with(user_model)
     @user_namespace.doc(
         description="Get a user with the user id. Only admins can access this route",
         params={"user_id": "The user id"},
     )
+    @jwt_required()
     def get(self, user_id):
         """
         Get a user's details
         """
-        admin_id = get_jwt_identity()
-        staff = User.get_by_id(admin_id)
-        if staff.is_admin:
-            user = User.get_by_id(user_id)
-            app.logger.info(f"Admin got a user's details")
-            return user, HTTPStatus.OK
-        app.logger.warning(f"Non admin tried to get a user's details")
-        return {"Error": "NOT ALLOWED"}, HTTPStatus.UNAUTHORIZED
+        identity = get_jwt_identity()
+        jwt_user = User.get_by_id(identity)
+        user = User.get_by_id(user_id)
+        if (jwt_user.is_admin == True) or (identity == user_id):
+            app.logger.info(f"A user's detail was gotten")
+            return marshal(user, user_model), HTTPStatus.OK
+        return {"message": "Not allowed."}, HTTPStatus.FORBIDDEN
 
-    @jwt_required(fresh=True)
     @user_namespace.doc(
         description="Delete a user with the user id. Only admins can access this route.",
         params={"user_id": "The user id"},
     )
+    @admin_required()
     def delete(self, user_id):
         """
         Delete a user
         """
-        admin_id = get_jwt_identity()
-        user = User.get_by_id(admin_id)
-        if user.is_admin:
-            db.session.delete(User.get_by_id(user_id))
-            db.session.commit()
-            app.logger.info(f"Admin deleted user {User.get_by_id(user_id).username}")
-            return {"message": "User deleted successfully"}, HTTPStatus.OK
-        app.logger.warning(f"Non admin tried to delete a user")
-        return {"Error": "NOT ALLOWED"}, HTTPStatus.UNAUTHORIZED
+        user = User.get_by_id(user_id)
+        if user.email == configuration("EMAIL"):
+            return {
+                "Message": "You cannot delete the super administrator"
+            }, HTTPStatus.FORBIDDEN
+        db.session.delete(user)
+        app.logger.info(f"Admin deleted user {User.get_by_id(user_id).username}")
+        db.session.commit()
+        return {"message": "User deleted successfully"}, HTTPStatus.OK
 
-    @jwt_required()
+    @super_admin_required()
     @user_namespace.doc(
         description="Give a user admin privileges using the user id. Only the super administrator can access this route",
         params={"user_id": "The user id"},
@@ -145,9 +143,6 @@ class UserView(Resource):
         """
         Give staff privileges to user
         """
-        jwt = get_jwt()
-        if not jwt.get("super_admin"):
-            abort(401, "Admin privilege only")
         user = User.get_by_id(user_id)
         user.make_admin()
         app.logger.info("Super Admin gave a user admin privilege")
@@ -157,7 +152,6 @@ class UserView(Resource):
 @user_namespace.route("/<int:user_id>/urls")
 class UserURLsList(Resource):
     @jwt_required()
-    @user_namespace.marshal_list_with(url_model)
     @user_namespace.doc(
         description="Get all the shortened urls a user has created",
         params={"user_id": "The user id"},
@@ -166,10 +160,14 @@ class UserURLsList(Resource):
         """
         Get a user's url history
         """
+        identity = get_jwt_identity()
+        jwt_user = User.get_by_id(identity)
         user = User.get_by_id(user_id)
-        urls = user.urls
-        app.logger.info(f"Admin searched for all urls by {user.username}")
-        return urls, HTTPStatus.OK
+        if (jwt_user.is_admin == True) or (identity == user_id):
+            urls = user.urls
+            app.logger.info(f"Admin searched for all urls by {user.username}")
+            return marshal(urls, url_model), HTTPStatus.OK
+        return {"message": "Not allowed."}, HTTPStatus.FORBIDDEN
 
 
 @user_namespace.route("/<int:user_id>/paid")
@@ -178,7 +176,7 @@ class PaidUserView(Resource):
         description="Give a user paid user privileges. Can be accessed by only an admin",
         params={"user_id": "The user id"},
     )
-    @jwt_required()
+    @admin_required()
     def patch(self, user_id):
         """
         Give a user paid user privileges.

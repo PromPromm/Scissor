@@ -5,6 +5,9 @@ from ..models.urls import Url
 from .mail import mail
 from itsdangerous import URLSafeTimedSerializer
 from decouple import config as configuration
+from flask_jwt_extended import verify_jwt_in_request, get_jwt
+from functools import wraps
+from http import HTTPStatus
 
 
 def generate_url_key(num_of_chars: int):
@@ -39,3 +42,35 @@ def confirm_token(token, expiration=3600):
     except:
         return False
     return email
+
+
+def admin_required():
+    def wrapper(fn):
+        @wraps(fn)
+        def decorator(*args, **kwargs):
+            verify_jwt_in_request()
+            claims = get_jwt()
+            if claims["is_administrator"] == True:
+                return fn(*args, **kwargs)
+            else:
+                return {"Error": "Admins only!"}, HTTPStatus.FORBIDDEN
+
+        return decorator
+
+    return wrapper
+
+
+def super_admin_required():
+    def wrapper(fn):
+        @wraps(fn)
+        def decorator(*args, **kwargs):
+            verify_jwt_in_request()
+            claims = get_jwt()
+            if claims["super_admin"] == True:
+                return fn(*args, **kwargs)
+            else:
+                return {"Error": "Super Admins only!"}, HTTPStatus.FORBIDDEN
+
+        return decorator
+
+    return wrapper
