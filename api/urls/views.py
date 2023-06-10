@@ -4,7 +4,7 @@ from ..models.users import User
 from ..models.urls import Url
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from http import HTTPStatus
-from ..utils import db, generate_url_key
+from ..utils import db, generate_url_key, url_key_taken
 import validators
 import qrcode
 import io
@@ -43,21 +43,27 @@ class CreateURLView(Resource):
             abort(400, "Your provided URL is not valid")
 
         if user.paid:
-            url = Url(
-                name=data.get("name"),
-                key=data.get("key"),
-                target_url=data.get("target url"),
-            )
-        else:
-            url = Url(
-                name=data.get("name"),
-                key=generate_url_key(5),
-                target_url=data.get("target url"),
-            )
+            if data.get("key") != None:
+                if url_key_taken(data.get("key")):
+                    abort(400, "Key is taken")
+                url = Url(
+                    name=data.get("name"),
+                    key=data.get("key"),
+                    target_url=data.get("target url"),
+                )
+                url.user_id = user_id
+                url.save()
+                app.logger.info(f"{user.username} shortened a url")
+                return {"message": "URL CREATED"}, HTTPStatus.CREATED
+        url = Url(  # Implement not showing key option for a user who is not paid when developing the frontend
+            name=data.get("name"),
+            key=generate_url_key(5),
+            target_url=data.get("target url"),
+        )
         url.user_id = user_id
         url.save()
         app.logger.info(f"{user.username} shortened a url")
-        return {"message": "URL CREATED"}, HTTPStatus.OK
+        return {"message": "URL CREATED"}, HTTPStatus.CREATED
 
 
 @url_namespace.route("/<string:url_key>")

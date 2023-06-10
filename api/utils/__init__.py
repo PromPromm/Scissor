@@ -22,6 +22,12 @@ def generate_url_key(num_of_chars: int):
     return key
 
 
+def url_key_taken(key):
+    if Url.get_by_key(key):
+        return True
+    return False
+
+
 def generate_confirmation_token(email):
     """
     Generates token for email confirmation
