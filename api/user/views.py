@@ -99,13 +99,14 @@ class UserList(Resource):
 @user_namespace.route("/<int:user_id>")
 class UserView(Resource):
     @user_namespace.doc(
-        description="Get a user with the user id. Only admins can access this route",
+        description="""Get a user with the user id.
+        This route can be accessed by an admin or the user whose id is in the user_id variable of the url.""",
         params={"user_id": "The user id"},
     )
     @jwt_required()
     def get(self, user_id):
         """
-        Get a user's details
+        Get a user by id
         """
         identity = get_jwt_identity()
         jwt_user = User.get_by_id(identity)
@@ -116,7 +117,7 @@ class UserView(Resource):
         return {"message": "Not allowed."}, HTTPStatus.FORBIDDEN
 
     @user_namespace.doc(
-        description="Delete a user with the user id. Only admins can access this route.",
+        description="Delete a user with the user id. Only admins can access this route. Super Admin cannot be deleted",
         params={"user_id": "The user id"},
     )
     @admin_required()
@@ -153,7 +154,8 @@ class UserView(Resource):
 class UserURLsList(Resource):
     @jwt_required()
     @user_namespace.doc(
-        description="Get all the shortened urls a user has created",
+        description="""Get all the shortened urls a user has created.
+        This route can be accessed by an admin or the user whose id is in the user_id variable of the url.""",
         params={"user_id": "The user id"},
     )
     def get(self, user_id):
@@ -229,7 +231,10 @@ class ResetPasswordRequest(Resource):
 @user_namespace.route("/reset_password/<token>")
 class ChangePassword(Resource):
     @user_namespace.expect(change_password_model)
-    @user_namespace.doc(description="Change user password.")
+    @user_namespace.doc(
+        description="Change user password.",
+        params={"token": "The token contained the url sent to the user's email"},
+    )
     def put(self, token):
         """
         Change password route

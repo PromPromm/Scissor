@@ -83,7 +83,9 @@ class RedirectURLView(Resource):
     )
     @jwt_required()
     @url_namespace.doc(
-        description="Delete a URL", params={"url_key": "The shortened url key"}
+        description="""Delete a URL.
+        This route can be accessed by an admin or the user who created the url.""",
+        params={"url_key": "The shortened url key"},
     )
     def delete(self, url_key):
         """
