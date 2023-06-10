@@ -1,10 +1,12 @@
 from flask_restx import Namespace, Resource, fields
-from flask import abort
+from flask import abort, request, url_for
 from ..models.users import User
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from http import HTTPStatus
-from ..utils import db, confirm_token
+from ..utils import db, confirm_token, mail
 from datetime import datetime
+from flask_mail import Message
+from werkzeug.security import generate_password_hash
 
 from flask import current_app as app
 
@@ -39,6 +41,44 @@ user_model = user_namespace.model(
         ),
     },
 )
+change_password_model = user_namespace.model(
+    "password_reset",
+    {
+        "new_password": fields.String(required=True, description="The new password"),
+        "confirm_password": fields.String(
+            required=True, description="The new password again"
+        ),
+    },
+)
+
+password_reset_request_model = user_namespace.model(
+    "password_reset_request",
+    {
+        "email": fields.String(required=True, description="Email"),
+    },
+)
+
+
+def reset_password_email(user):
+    token = user.get_reset_token()
+    msg = Message(
+        "Scissor Password Reset",
+        sender="noreply@demo.com",
+        recipients=[user.email],
+        body=f"""Hi {user.first_name} {user.last_name},
+        A password reset for your account was requested.
+        Please visit the following link to change your password
+        {url_for(
+            "user_change_password",
+            token=token,
+            _external=True,
+            _method="PUT",
+        )}
+        Note that this link is valid for 24 hours.
+        After the time limit has expired, you will have to resubmit the request for a password reset.
+        """,
+    )
+    mail.send(msg)
 
 
 @user_namespace.route("/")
@@ -171,4 +211,41 @@ class ConfirmEmailView(Resource):
             return {
                 "message": "You have successfully confirmed your account. Thanks!"
             }, HTTPStatus.OK
+        return {"Error": "The confirmation link is invalid or has expired."}, 498
+
+
+@user_namespace.route("/reset_password_request")
+class ResetPasswordRequest(Resource):
+    @user_namespace.expect(password_reset_request_model)
+    @user_namespace.doc(description="Reset Password Request on Scissor")
+    def post(self):
+        """
+        Request a password reset email
+        """
+        data = request.get_json()
+        user = User.query.filter_by(email=data.get("email")).first_or_404()
+        reset_password_email(user)
+        return {"message": "Password Reset Email sent. Check your email"}, HTTPStatus.OK
+
+
+@user_namespace.route("/reset_password/<token>")
+class ChangePassword(Resource):
+    @user_namespace.expect(change_password_model)
+    @user_namespace.doc(description="Change user password.")
+    def put(self, token):
+        """
+        Change password route
+        """
+        user = User.verify_reset_token(token)
+        if user:
+            data = request.get_json()
+            if data.get("new_password") == data.get("confirm_password"):
+                user.password = generate_password_hash(data.get("new_password"))
+                db.session.commit()
+                return {
+                    "message": "Password successfully changed. Proceed to login"
+                }, HTTPStatus.OK
+            return {
+                "Error": "New password and confirm password do not match. Kindly enter password again"
+            }, HTTPStatus.BAD_REQUEST
         return {"Error": "The confirmation link is invalid or has expired."}, 498

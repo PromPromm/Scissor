@@ -1,5 +1,9 @@
 from ..utils import db
 from datetime import datetime
+import jwt
+from time import time
+import os
+from flask import current_app as app
 
 
 class User(db.Model):
@@ -34,3 +38,19 @@ class User(db.Model):
     @classmethod
     def get_by_id(cls, id):
         return cls.query.get_or_404(id)
+
+    def get_reset_token(self, expires=86400):
+        return jwt.encode(
+            {"reset_password": self.username, "exp": time() + expires},
+            key=os.getenv("SECRET_KEY"),
+        )
+
+    def verify_reset_token(token):
+        try:
+            username = jwt.decode(
+                token, key=os.getenv("SECRET_KEY"), algorithms="HS256"
+            )["reset_password"]
+        except Exception as e:
+            app.logger.info(e)
+            return
+        return User.query.filter_by(username=username).first()
