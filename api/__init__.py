@@ -52,10 +52,21 @@ def create_app(config=config_dict["dev"]):
 
     db.init_app(app)
 
+    authorization = {
+        "Bearer Auth": {
+            "type": "apiKey",
+            "in": "header",
+            "name": "Authorization",
+            "description": "Add a JWT token to the header with ** Bearer &lt;JWT&gt; token to authorize **",
+        }
+    }
+
     api = Api(
         app,
         title="Scissor API",
         description="A simple URL shortening REST API service",
+        authorizations=authorization,
+        security="Bearer Auth",
     )
 
     api.add_namespace(auth_namespace)
