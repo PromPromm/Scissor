@@ -5,6 +5,7 @@ from flask_migrate import Migrate
 from .utils import db, mail
 from .models.urls import Url
 from .models.users import User
+from .models.token import ResetPasswordTokenBlocklist
 from .models.blocklist import TokenBlocklist
 from .auth.views import auth_namespace
 from .user.views import user_namespace

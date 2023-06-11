@@ -1,13 +1,14 @@
 from flask_restx import Namespace, Resource, fields, marshal
-from flask import request, url_for
+from flask import request, url_for, abort
 from ..models.users import User
+from ..models.token import ResetPasswordTokenBlocklist
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from http import HTTPStatus
 from ..utils import db, confirm_token, mail, admin_required, super_admin_required
 from datetime import datetime
 from flask_mail import Message
-from werkzeug.security import generate_password_hash
 from decouple import config as configuration
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from flask import current_app as app
 
@@ -111,6 +112,8 @@ class UserView(Resource):
         identity = get_jwt_identity()
         jwt_user = User.get_by_id(identity)
         user = User.get_by_id(user_id)
+
+        # checks if it is an admin or the user whose id is in the user_id variable of the url that is accessing the route
         if (jwt_user.is_admin == True) or (identity == user_id):
             app.logger.info(f"A user's detail was gotten")
             return marshal(user, user_model), HTTPStatus.OK
@@ -126,6 +129,8 @@ class UserView(Resource):
         Delete a user
         """
         user = User.get_by_id(user_id)
+
+        # checks if admin is trying to delete the super administrator
         if user.email == configuration("EMAIL"):
             return {
                 "Message": "You cannot delete the super administrator"
@@ -137,14 +142,20 @@ class UserView(Resource):
 
     @super_admin_required()
     @user_namespace.doc(
-        description="Give a user admin privileges using the user id. Only the super administrator can access this route",
+        description="Give or remove a user admin privileges using the user id. Only the super administrator can access this route",
         params={"user_id": "The user id"},
     )
     def patch(self, user_id):
         """
-        Give staff privileges to user
+        Give or revoke staff privileges to user
         """
         user = User.get_by_id(user_id)
+
+        # check if user is an admin
+        if user.is_admin:
+            user.remove_admin()
+            app.logger.info("Super Admin removed a user's admin privilege")
+            return {"messsage": "User is no longer an admin"}, HTTPStatus.OK
         user.make_admin()
         app.logger.info("Super Admin gave a user admin privilege")
         return {"messsage": "User is now an admin"}, HTTPStatus.OK
@@ -165,6 +176,8 @@ class UserURLsList(Resource):
         identity = get_jwt_identity()
         jwt_user = User.get_by_id(identity)
         user = User.get_by_id(user_id)
+
+        # checks if it is an admin or the user whose id is in the user_id variable of the url that is accessing the route
         if (jwt_user.is_admin == True) or (identity == user_id):
             urls = user.urls
             app.logger.info(f"Admin searched for all urls by {user.username}")
@@ -190,6 +203,24 @@ class PaidUserView(Resource):
         return {"Message": "Now a paid user"}, HTTPStatus.OK
 
 
+@user_namespace.route("/<int:user_id>/paid_remove")
+class RevokePaidUserView(Resource):
+    @user_namespace.doc(
+        description="Revoke a user paid user privileges. Can be accessed by only an admin",
+        params={"user_id": "The user id"},
+    )
+    @admin_required()
+    def patch(self, user_id):
+        """
+        Revoke a user's paid user privileges.
+        """
+        user = User.get_by_id(user_id)
+        user.paid = False
+        db.session.commit()
+        app.logger.info(f"User {user.username} is now on the free plan")
+        return {"Message": "No longer a paid user"}, HTTPStatus.OK
+
+
 @user_namespace.route("/confirm/<token>")
 class ConfirmEmailView(Resource):
     @user_namespace.doc(
@@ -200,9 +231,13 @@ class ConfirmEmailView(Resource):
         """
         Confirm user email
         """
+
+        # checks if token is valid
         if confirm_token(token):
             email = confirm_token(token)
             user = User.query.filter_by(email=email).first_or_404()
+
+            # checks if user is already confirmed
             if user.confirmed:
                 return {"message": "Account already confirmed"}, HTTPStatus.OK
             user.confirmed = True
@@ -240,9 +275,24 @@ class ChangePassword(Resource):
         Change password route
         """
         user = User.verify_reset_token(token)
+        token_exists = ResetPasswordTokenBlocklist.query.filter_by(token=token).first()
+
+        # checks if token has been blocklisted
+        if token_exists:
+            abort(400, "Token has already been used. Request another")
+
+        # checks if user exists
         if user:
             data = request.get_json()
+            # checks if new password and confirm password matches
             if data.get("new_password") == data.get("confirm_password"):
+                # checks if the new password and old password are the same
+                if check_password_hash(user.password, data.get("new_password")):
+                    return {
+                        "Error": "New password is the same as the old password. Kindly enter another password"
+                    }, HTTPStatus.BAD_REQUEST
+                new_token = ResetPasswordTokenBlocklist(token=token)
+                db.session.add(new_token)
                 user.password = generate_password_hash(data.get("new_password"))
                 db.session.commit()
                 return {

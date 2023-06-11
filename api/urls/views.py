@@ -39,11 +39,15 @@ class CreateURLView(Resource):
 
         data = request.get_json()
 
+        # validates the url
         if not validators.url(data.get("target url")):
             abort(400, "Your provided URL is not valid")
 
+        # checks if the user is a paid user
         if user.paid:
+            # checks if a paid user enters a url key or not
             if data.get("key") != None:
+                # if a paid user enters a key, checks if another paid user has not used the key
                 if url_key_taken(data.get("key")):
                     abort(400, "Key is taken")
                 url = Url(
@@ -67,7 +71,7 @@ class CreateURLView(Resource):
 
 
 @url_namespace.route("/<string:url_key>")
-class RedirectURLView(Resource):
+class SingleURLView(Resource):
     @url_namespace.doc(
         description="Redirect a URL", params={"url_key": "The shortened url key"}
     )
@@ -76,6 +80,8 @@ class RedirectURLView(Resource):
         Redirect shorten url to target url
         """
         url = Url.get_by_key(url_key)
+
+        # check if url exists
         if url:
             url.clicks += 1
             db.session.commit()
@@ -100,7 +106,10 @@ class RedirectURLView(Resource):
         identity = get_jwt_identity()
         jwt_user = User.get_by_id(identity)
         url = Url.get_by_key(url_key)
+
+        # checks if url exists
         if url:
+            # checks if it is an admin or the user that created a url that is accessing the route
             if (jwt_user.is_admin == True) or (identity == url.user_id):
                 url.is_active = False
                 db.session.commit()
@@ -120,6 +129,8 @@ class QRCodeGenerationView(Resource):
         Generate qrcode for shortened url
         """
         url = Url.get_by_key(url_key)
+
+        # checks if url exists
         if url:
             qr = qrcode.QRCode(version=1, box_size=10, border=5)
             qr.add_data(url.target_url)

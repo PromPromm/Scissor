@@ -35,6 +35,13 @@ class User(db.Model):
         self.is_admin = True
         db.session.commit()
 
+    def remove_admin(self):
+        """
+        Gives user admin privileges
+        """
+        self.is_admin = False
+        db.session.commit()
+
     @classmethod
     def get_by_id(cls, id):
         return cls.query.get_or_404(id)

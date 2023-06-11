@@ -64,15 +64,19 @@ class SignUp(Resource):
         """
         data = request.get_json()
 
+        # validates email
         if not validators.email(data.get("email")):
             abort(400, "Email is not valid")
 
         user = User.query.filter_by(email=data.get("email")).first()
         user_name = User.query.filter_by(username=data.get("username")).first()
 
+        # check if a user with the email exists
         if user:
             app.logger.info(f"Someone tried to sign up with existing email")
             return {"Error": "User exists"}, HTTPStatus.CONFLICT
+
+        # check if a user with the username exists
         if user_name:
             app.logger.info(
                 f"Someone tried to sign up with a username already taken by someone else"
@@ -113,7 +117,9 @@ class Login(Resource):
         email = data.get("email")
         user = User.query.filter_by(email=email).first()
 
+        # checks if password matches
         if user and check_password_hash(user.password, data.get("password")):
+            # checks if user is an admin
             if user.is_admin:
                 access_token = create_access_token(
                     identity=user.id,
@@ -169,6 +175,8 @@ class Refresh(Resource):
         """
         user_id = get_jwt_identity()
         user = User.get_by_id(user_id)
+
+        # checks if user is an admin
         if user.is_admin:
             access_token = create_access_token(
                 identity=user_id,
