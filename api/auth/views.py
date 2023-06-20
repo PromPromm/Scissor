@@ -1,5 +1,5 @@
 from flask_restx import Namespace, Resource, fields
-from flask import request, abort, url_for
+from flask import request, abort, url_for, copy_current_request_context
 from ..models.users import User
 from ..models.blocklist import TokenBlocklist
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -15,6 +15,8 @@ from ..utils import db, generate_confirmation_token, mail
 from datetime import timezone, datetime
 import validators
 from flask_mail import Message
+
+from threading import Thread
 
 from flask import current_app as app
 
@@ -40,7 +42,7 @@ login_model = auth_namespace.model(
 )
 
 
-def send_register_email(user, confirm_url):
+def send_async(user, confirm_url):
     msg = Message(
         "Scissor-Please confirm your email",
         sender="noreply@demo.com",
@@ -51,7 +53,13 @@ def send_register_email(user, confirm_url):
         "<br>"
         "<p>Cheers!</p>",
     )
-    mail.send(msg)
+
+    @copy_current_request_context
+    def send_message(msg):
+        mail.send(msg)
+
+    sender = Thread(name="mail_sender", target=send_message, args=(msg,))
+    sender.start()
 
 
 @auth_namespace.route("/signup")
@@ -98,7 +106,7 @@ class SignUp(Resource):
             _external=True,
             _method="PATCH",
         )
-        send_register_email(new_user, confirm_url)
+        send_async(new_user, confirm_url)
         app.logger.info(f"Sign up email was sent to User {new_user.username}")
         db.session.commit()
         app.logger.info(f"User {new_user.username} signed up")

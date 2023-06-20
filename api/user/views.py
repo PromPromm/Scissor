@@ -1,5 +1,5 @@
 from flask_restx import Namespace, Resource, fields, marshal
-from flask import request, url_for, abort
+from flask import request, url_for, abort, copy_current_request_context
 from ..models.users import User
 from ..models.token import ResetPasswordTokenBlocklist
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -9,6 +9,7 @@ from datetime import datetime
 from flask_mail import Message
 from decouple import config as configuration
 from werkzeug.security import generate_password_hash, check_password_hash
+from threading import Thread
 
 from flask import current_app as app
 
@@ -61,7 +62,7 @@ password_reset_request_model = user_namespace.model(
 )
 
 
-def reset_password_email(user):
+def send_async_reset(user):
     token = user.get_reset_token()
     msg = Message(
         "Scissor Password Reset",
@@ -80,7 +81,13 @@ def reset_password_email(user):
         After the time limit has expired, you will have to resubmit the request for a password reset.
         """,
     )
-    mail.send(msg)
+
+    @copy_current_request_context
+    def send_message(msg):
+        mail.send(msg)
+
+    sender = Thread(name="mail_sender", target=send_message, args=(msg,))
+    sender.start()
 
 
 @user_namespace.route("/")
@@ -259,7 +266,7 @@ class ResetPasswordRequest(Resource):
         """
         data = request.get_json()
         user = User.query.filter_by(email=data.get("email")).first_or_404()
-        reset_password_email(user)
+        send_async_reset(user)
         return {"message": "Password Reset Email sent. Check your email"}, HTTPStatus.OK
 
 
