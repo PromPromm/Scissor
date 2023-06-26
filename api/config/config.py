@@ -23,6 +23,7 @@ class Config:
     MAIL_USERNAME = os.environ.get("MAIL_USERNAME")
     MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD")
     SECURITY_PASSWORD_SALT = config("SECURITY_PASSWORD_SALT", "secure-password-salt")
+    CACHE_TYPE = "simple"
 
 
 class DevConfig(Config):

@@ -4,7 +4,7 @@ from ..models.users import User
 from ..models.urls import Url
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from http import HTTPStatus
-from ..utils import db, generate_url_key, url_key_taken
+from ..utils import db, generate_url_key, url_key_taken, cache
 import validators
 import qrcode
 import io
@@ -75,6 +75,7 @@ class SingleURLView(Resource):
     @url_namespace.doc(
         description="Redirect a URL", params={"url_key": "The shortened url key"}
     )
+    @cache.cached(timeout=18000)
     def get(self, url_key):
         """
         Redirect shorten url to target url

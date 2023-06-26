@@ -2,7 +2,7 @@ from flask import Flask
 from flask_restx import Api
 from .utils import db
 from flask_migrate import Migrate
-from .utils import db, mail
+from .utils import db, mail, cache
 from .models.urls import Url
 from .models.users import User
 from .models.token import ResetPasswordTokenBlocklist
@@ -76,6 +76,8 @@ def create_app(config=config_dict["dev"]):
     migrate = Migrate(app, db)
 
     mail.init_app(app)
+
+    cache.init_app(app)
 
     jwt = JWTManager(app)
 

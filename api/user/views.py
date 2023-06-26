@@ -4,7 +4,7 @@ from ..models.users import User
 from ..models.token import ResetPasswordTokenBlocklist
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from http import HTTPStatus
-from ..utils import db, confirm_token, mail, admin_required, super_admin_required
+from ..utils import db, confirm_token, mail, admin_required, super_admin_required, cache
 from datetime import datetime
 from flask_mail import Message
 from decouple import config as configuration
@@ -96,6 +96,7 @@ class UserList(Resource):
         description="Get all registered users. Can be accessed by only an admin"
     )
     @admin_required()
+    @cache.cached(timeout=1800)
     def get(self):
         """
         Get all users
@@ -176,6 +177,7 @@ class UserURLsList(Resource):
         This route can be accessed by an admin or the user whose id is in the user_id variable of the url.""",
         params={"user_id": "The user id"},
     )
+    @cache.cached(timeout=3600)
     def get(self, user_id):
         """
         Get a user's url history
