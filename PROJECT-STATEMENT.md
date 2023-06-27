@@ -31,9 +31,9 @@ Requirements And Implementation Guide:
   coming from. We need to track when a URL is used.
 - Link History:
   Scissor allows users to see the history of links they’ve created so they can easily find and reuse
-  links they have previously created
+  links they have previously created.
+  
   Best Practices:
-
 1. You are required to build with either Nodejs(TypeScript),, Goland or Python.
 2. Ensure you are validating the URL to be a valid url before creating a shortened version
    of it. This is to prevent broken links.
