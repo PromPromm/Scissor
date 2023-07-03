@@ -4,6 +4,7 @@ import secrets
 from ..models.urls import Url
 from .mail import mail
 from .cache import cache
+from .limiter import limiter
 from itsdangerous import URLSafeTimedSerializer
 from decouple import config as configuration
 from flask_jwt_extended import verify_jwt_in_request, get_jwt

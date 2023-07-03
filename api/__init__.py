@@ -1,6 +1,6 @@
 from flask import Flask
 from flask_restx import Api
-from .utils import db
+from .utils import db, limiter
 from flask_migrate import Migrate
 from .utils import db, mail, cache
 from .models.urls import Url
@@ -78,6 +78,8 @@ def create_app(config=config_dict["dev"]):
     mail.init_app(app)
 
     cache.init_app(app)
+
+    limiter.init_app(app)
 
     jwt = JWTManager(app)
 

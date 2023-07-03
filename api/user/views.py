@@ -4,7 +4,15 @@ from ..models.users import User
 from ..models.token import ResetPasswordTokenBlocklist
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from http import HTTPStatus
-from ..utils import db, confirm_token, mail, admin_required, super_admin_required, cache
+from ..utils import (
+    db,
+    confirm_token,
+    mail,
+    admin_required,
+    super_admin_required,
+    cache,
+    limiter,
+)
 from datetime import datetime
 from flask_mail import Message
 from decouple import config as configuration
@@ -262,6 +270,7 @@ class ConfirmEmailView(Resource):
 class ResetPasswordRequest(Resource):
     @user_namespace.expect(password_reset_request_model)
     @user_namespace.doc(description="Reset Password Request on Scissor")
+    @limiter.limit("1/day")
     def post(self):
         """
         Request a password reset email
