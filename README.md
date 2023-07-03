@@ -50,6 +50,8 @@ Brief is the new black, this is what inspires the team at Scissor. In today's wo
 - [Flask SQLAlchemy](https://flask-sqlalchemy.palletsprojects.com/) - object relational mapper
 - [Flask JWT extended](https://flask-jwt-extended.readthedocs.io/en/stable/) - authentication and authorization
 - [Flask Mail](https://pythonhosted.org/Flask-Mail/) - sending emails
+- [Flask Caching](https://flask-caching.readthedocs.io/en/latest/) - Database Cache layering
+- [Flask Limiter](https://flask-limiter.readthedocs.io/en/stable/) - Rate limiting
 <p align="right"><a href="#readme-top">back to top</a></p>
 
 
