@@ -24,6 +24,8 @@ class Config:
     MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD")
     SECURITY_PASSWORD_SALT = config("SECURITY_PASSWORD_SALT", "secure-password-salt")
     CACHE_TYPE = "simple"
+    STRIPE_SECRET_KEY = config("STRIPE_SECRET_KEY")
+    STRIPE_PUBLISHABLE_KEY = config("STRIPE_PUBLISHABLE_KEY")
 
 
 class DevConfig(Config):

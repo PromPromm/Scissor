@@ -202,22 +202,22 @@ class UserURLsList(Resource):
         return {"message": "Not allowed."}, HTTPStatus.FORBIDDEN
 
 
-@user_namespace.route("/<int:user_id>/paid")
-class PaidUserView(Resource):
-    @user_namespace.doc(
-        description="Give a user paid user privileges. Can be accessed by only an admin",
-        params={"user_id": "The user id"},
-    )
-    @admin_required()
-    def patch(self, user_id):
-        """
-        Give a user paid user privileges.
-        """
-        user = User.get_by_id(user_id)
-        user.paid = True
-        db.session.commit()
-        app.logger.info(f"User {user.username} paid for a subsription plan")
-        return {"Message": "Now a paid user"}, HTTPStatus.OK
+# @user_namespace.route("/<int:user_id>/paid")
+# class PaidUserView(Resource):
+#     @user_namespace.doc(
+#         description="Give a user paid user privileges. Can be accessed by only an admin",
+#         params={"user_id": "The user id"},
+#     )
+#     @admin_required()
+#     def patch(self, user_id):
+#         """
+#         Give a user paid user privileges.
+#         """
+#         user = User.get_by_id(user_id)
+#         user.paid = True
+#         db.session.commit()
+#         app.logger.info(f"User {user.username} paid for a subsription plan")
+#         return {"Message": "Now a paid user"}, HTTPStatus.OK
 
 
 @user_namespace.route("/<int:user_id>/paid_remove")
