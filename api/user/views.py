@@ -270,7 +270,7 @@ class ConfirmEmailView(Resource):
 class ResetPasswordRequest(Resource):
     @user_namespace.expect(password_reset_request_model)
     @user_namespace.doc(description="Reset Password Request on Scissor")
-    @limiter.limit("1/day")
+    @limiter.limit("1/day")  # Comment this line out when testing
     def post(self):
         """
         Request a password reset email
@@ -319,4 +319,4 @@ class ChangePassword(Resource):
             return {
                 "Error": "New password and confirm password do not match. Kindly enter password again"
             }, HTTPStatus.BAD_REQUEST
-        return {"Error": "The confirmation link is invalid or has expired."}, 498
+        return {"Error": "The reset token is invalid or has expired."}, 498

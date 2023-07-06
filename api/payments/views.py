@@ -1,4 +1,4 @@
-from flask import redirect, abort, render_template, request, jsonify
+from flask import redirect, abort, render_template, request
 from flask_restx import Resource, Namespace
 import stripe
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -89,9 +89,9 @@ class PaidUserView(Resource):
                 data, signature, configuration("STRIPE_WEBHOOK_SECRET")
             )
         except ValueError as e:
-            return jsonify({"error": str(e)}), 400
+            return {"error": str(e)}, 400
         except stripe.error.SignatureVerificationError as e:
-            return jsonify({"error": str(e)}), 400
+            return {"error": str(e)}, 400
 
         if event["type"] == "checkout.session.completed":
             session = stripe.checkout.Session.retrieve(
@@ -103,4 +103,4 @@ class PaidUserView(Resource):
                 user.paid = True
                 db.session.commit()
         app.logger.info(f"User {user.username} paid for a subsription plan")
-        return jsonify({"message": "Webhook received successfully."})
+        return {"message": "Webhook received successfully."}
