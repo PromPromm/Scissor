@@ -14,7 +14,8 @@ from .urls.views import url_namespace
 # from .payments.views import payment_namespace
 from flask_jwt_extended import JWTManager
 from decouple import config as configuration
-import stripe
+
+# import stripe
 
 from .config import config_dict
 
@@ -79,7 +80,7 @@ def create_app(config=config_dict["dev"]):
 
     migrate = Migrate(app, db)
 
-    stripe.api_key = configuration("STRIPE_SECRET_KEY")
+    # stripe.api_key = configuration("STRIPE_SECRET_KEY")
 
     mail.init_app(app)
 
