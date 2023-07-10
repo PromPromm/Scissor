@@ -10,7 +10,8 @@ from .models.blocklist import TokenBlocklist
 from .auth.views import auth_namespace
 from .user.views import user_namespace
 from .urls.views import url_namespace
-from .payments.views import payment_namespace
+
+# from .payments.views import payment_namespace
 from flask_jwt_extended import JWTManager
 from decouple import config as configuration
 import stripe
@@ -74,7 +75,7 @@ def create_app(config=config_dict["dev"]):
     api.add_namespace(auth_namespace)
     api.add_namespace(user_namespace)
     api.add_namespace(url_namespace)
-    api.add_namespace(payment_namespace)
+    # api.add_namespace(payment_namespace)
 
     migrate = Migrate(app, db)
 
