@@ -3,6 +3,9 @@ from decouple import config
 from datetime import timedelta
 
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
+url = config("DATABASE_URL")
+if url.startswith("postgres://"):
+    url = url.replace("postgres://", "postgresql://", 1)
 
 
 class Config:
@@ -42,7 +45,8 @@ class TestConfig(Config):
 
 
 class ProductionConfig(Config):
-    pass
+    SQLALCHEMY_DATABASE_URI = url
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 
 config_dict = {"dev": DevConfig, "prod": ProductionConfig, "test": TestConfig}
