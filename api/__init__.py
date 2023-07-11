@@ -10,6 +10,7 @@ from .models.blocklist import TokenBlocklist
 from .auth.views import auth_namespace
 from .user.views import user_namespace
 from .urls.views import url_namespace
+from flask_cors import CORS
 
 # from .payments.views import payment_namespace
 from flask_jwt_extended import JWTManager
@@ -53,6 +54,8 @@ dictConfig(
 def create_app(config=config_dict["dev"]):
     app = Flask(__name__)
     app.config.from_object(config)
+
+    CORS(app)
 
     db.init_app(app)
 
