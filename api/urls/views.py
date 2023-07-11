@@ -8,6 +8,7 @@ from ..utils import db, generate_url_key, url_key_taken, cache, limiter
 import validators
 import qrcode
 import io
+from decouple import config as configuration
 
 from flask import current_app as app
 
@@ -22,8 +23,10 @@ url_model = url_namespace.model(
     },
 )
 
+DOMAIN = configuration("DOMAIN_URL")
 
-@url_namespace.route("/")
+
+@url_namespace.route("create")
 class CreateURLView(Resource):
     @url_namespace.expect(url_model)
     @url_namespace.doc(
@@ -58,7 +61,7 @@ class CreateURLView(Resource):
                 url.user_id = user_id
                 url.save()
                 app.logger.info(f"{user.username} shortened a url")
-                return {"message": "URL CREATED"}, HTTPStatus.CREATED
+                return {"Short URL": f"{DOMAIN + '/' + url.key}"}, HTTPStatus.CREATED
         url = Url(  # Implement not showing key option for a user who is not paid when developing the frontend
             name=data.get("name"),
             key=generate_url_key(5),
@@ -67,10 +70,10 @@ class CreateURLView(Resource):
         url.user_id = user_id
         url.save()
         app.logger.info(f"{user.username} shortened a url")
-        return {"message": "URL CREATED"}, HTTPStatus.CREATED
+        return {"Short URL": f"{DOMAIN + '/' + url.key}"}, HTTPStatus.CREATED
 
 
-@url_namespace.route("/<string:url_key>")
+@url_namespace.route("<string:url_key>")
 class SingleURLView(Resource):
     @url_namespace.doc(
         description="Redirect a URL", params={"url_key": "The shortened url key"}
@@ -121,7 +124,7 @@ class SingleURLView(Resource):
         return {"message": "NOT FOUND"}, HTTPStatus.NOT_FOUND
 
 
-@url_namespace.route("/<string:url_key>/qrcode")
+@url_namespace.route("<string:url_key>/qrcode")
 class QRCodeGenerationView(Resource):
     @url_namespace.doc(
         description="Generate QRCode", params={"url_key": "The shortened url key"}

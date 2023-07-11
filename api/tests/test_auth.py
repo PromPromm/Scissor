@@ -29,7 +29,7 @@ class AuthenticationTestCase(unittest.TestCase):
             "password": "password",
         }
 
-        response = self.client.post("/auth/signup", json=user_signup_data)
+        response = self.client.post("signup", json=user_signup_data)
         assert response.status_code == 201
 
     def test_user_login(self):
@@ -40,12 +40,12 @@ class AuthenticationTestCase(unittest.TestCase):
             "username": "admin",
             "password": "password",
         }
-        response = self.client.post("/auth/signup", json=user_signup_data)
+        response = self.client.post("signup", json=user_signup_data)
         user_login_data = {
             "email": "testadmin@gmail.com",
             "password": "password",
         }
-        response = self.client.post("/auth/login", json=user_login_data)
+        response = self.client.post("login", json=user_login_data)
         assert response.status_code == 200
 
     def test_user_refresh(self):
@@ -57,14 +57,14 @@ class AuthenticationTestCase(unittest.TestCase):
             "password": "password",
         }
 
-        response = self.client.post("/auth/signup", json=admin_signup_data)
+        response = self.client.post("signup", json=admin_signup_data)
 
         admin = User.query.filter_by(email="testadmin@gmail.com").first()
 
         token = create_refresh_token(identity=admin.id)
         header = {"Authorization": f"Bearer {token}"}
 
-        response = self.client.post("/auth/refresh", headers=header)
+        response = self.client.post("refresh", headers=header)
 
         assert response.status_code == 200
 
@@ -77,7 +77,7 @@ class AuthenticationTestCase(unittest.TestCase):
             "password": "password",
         }
 
-        response = self.client.post("/auth/signup", json=admin_signup_data)
+        response = self.client.post("signup", json=admin_signup_data)
 
         admin = User.query.filter_by(email="testadmin@gmail.com").first()
 
@@ -85,6 +85,6 @@ class AuthenticationTestCase(unittest.TestCase):
 
         header = {"Authorization": f"Bearer {token}"}
 
-        response = self.client.delete("/auth/logout", headers=header)
+        response = self.client.delete("logout", headers=header)
         assert response.status_code == 200
         assert response.json == {"message": "User successfully logged out"}

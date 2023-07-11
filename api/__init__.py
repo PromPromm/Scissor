@@ -73,9 +73,9 @@ def create_app(config=config_dict["dev"]):
         security="Bearer Auth",
     )
 
-    api.add_namespace(auth_namespace)
-    api.add_namespace(user_namespace)
-    api.add_namespace(url_namespace)
+    api.add_namespace(auth_namespace, "/")
+    api.add_namespace(user_namespace, "/")
+    api.add_namespace(url_namespace, "/")
     # api.add_namespace(payment_namespace)
 
     migrate = Migrate(app, db)

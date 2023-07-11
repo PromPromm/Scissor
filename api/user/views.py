@@ -98,7 +98,7 @@ def send_async_reset(user):
     sender.start()
 
 
-@user_namespace.route("/")
+@user_namespace.route("users")
 class UserList(Resource):
     @user_namespace.doc(
         description="Get all registered users. Can be accessed by only an admin"
@@ -113,7 +113,7 @@ class UserList(Resource):
         return marshal(users, user_model), 200
 
 
-@user_namespace.route("/<int:user_id>")
+@user_namespace.route("user/<int:user_id>")
 class UserView(Resource):
     @user_namespace.doc(
         description="""Get a user with the user id.
@@ -177,7 +177,7 @@ class UserView(Resource):
         return {"messsage": "User is now an admin"}, HTTPStatus.OK
 
 
-@user_namespace.route("/<int:user_id>/urls")
+@user_namespace.route("user/<int:user_id>/urls")
 class UserURLsList(Resource):
     @jwt_required()
     @user_namespace.doc(
@@ -202,7 +202,7 @@ class UserURLsList(Resource):
         return {"message": "Not allowed."}, HTTPStatus.FORBIDDEN
 
 
-@user_namespace.route("/<int:user_id>/paid")
+@user_namespace.route("<int:user_id>/paid")
 class PaidUserView(Resource):
     @user_namespace.doc(
         description="Give a user paid user privileges. Can be accessed by only an admin",
@@ -220,7 +220,7 @@ class PaidUserView(Resource):
         return {"Message": "Now a paid user"}, HTTPStatus.OK
 
 
-@user_namespace.route("/<int:user_id>/paid_remove")
+@user_namespace.route("<int:user_id>/paid_remove")
 class RevokePaidUserView(Resource):
     @user_namespace.doc(
         description="Revoke a user paid user privileges. Can be accessed by only an admin",
@@ -238,7 +238,7 @@ class RevokePaidUserView(Resource):
         return {"Message": "No longer a paid user"}, HTTPStatus.OK
 
 
-@user_namespace.route("/confirm/<token>")
+@user_namespace.route("confirm/<token>")
 class ConfirmEmailView(Resource):
     @user_namespace.doc(
         description="Confirms a user email.",
@@ -266,11 +266,11 @@ class ConfirmEmailView(Resource):
         return {"Error": "The confirmation link is invalid or has expired."}, 498
 
 
-@user_namespace.route("/reset_password_request")
+@user_namespace.route("reset_password_request")
 class ResetPasswordRequest(Resource):
     @user_namespace.expect(password_reset_request_model)
     @user_namespace.doc(description="Reset Password Request on Scissor")
-    @limiter.limit("1/day")  # Comment this line out when testing
+    # @limiter.limit("1/day")  # Comment this line out when testing
     def post(self):
         """
         Request a password reset email
@@ -281,7 +281,7 @@ class ResetPasswordRequest(Resource):
         return {"message": "Password Reset Email sent. Check your email"}, HTTPStatus.OK
 
 
-@user_namespace.route("/reset_password/<token>")
+@user_namespace.route("reset_password/<token>")
 class ChangePassword(Resource):
     @user_namespace.expect(change_password_model)
     @user_namespace.doc(

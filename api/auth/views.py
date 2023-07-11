@@ -62,7 +62,7 @@ def send_async(user, confirm_url):
     sender.start()
 
 
-@auth_namespace.route("/signup")
+@auth_namespace.route("signup")
 class SignUp(Resource):
     @auth_namespace.expect(signup_model)
     @auth_namespace.doc(description="Sign up on Scissor")
@@ -113,7 +113,7 @@ class SignUp(Resource):
         return {"message": "User successfully created"}, HTTPStatus.CREATED
 
 
-@auth_namespace.route("/login")
+@auth_namespace.route("login")
 class Login(Resource):
     @auth_namespace.expect(login_model)
     @auth_namespace.doc(description="Login to account")
@@ -156,7 +156,7 @@ class Login(Resource):
         return {"Error": "Invalid credentials"}, HTTPStatus.FORBIDDEN
 
 
-@auth_namespace.route("/logout")
+@auth_namespace.route("logout")
 class Logout(Resource):
     @jwt_required(fresh=True)
     @auth_namespace.doc(description="Logs out user and revokes jwt")
@@ -173,7 +173,7 @@ class Logout(Resource):
         return {"message": "User successfully logged out"}
 
 
-@auth_namespace.route("/refresh")
+@auth_namespace.route("refresh")
 class Refresh(Resource):
     @jwt_required(refresh=True)
     @auth_namespace.doc(description="Generate refresh tokens")

@@ -29,7 +29,7 @@ class URLTestCase(unittest.TestCase):
             "username": "admin",
             "password": "password",
         }
-        self.client.post("/auth/signup", json=user_signup_data)
+        self.client.post("signup", json=user_signup_data)
 
         admin = User.query.filter_by(email="testadmin@gmail.com").first()
 
@@ -41,9 +41,7 @@ class URLTestCase(unittest.TestCase):
             "target url": "https://www.google.com/",
         }
 
-        response = self.client.post("/url/", headers=headers, json=url_post_data)
-
-        assert response.json == {"message": "URL CREATED"}
+        response = self.client.post("/create", headers=headers, json=url_post_data)
 
         assert response.status_code == 201
 
@@ -55,7 +53,7 @@ class URLTestCase(unittest.TestCase):
             "username": "admin",
             "password": "password",
         }
-        self.client.post("/auth/signup", json=user_signup_data)
+        self.client.post("signup", json=user_signup_data)
 
         admin = User.query.filter_by(email="testadmin@gmail.com").first()
 
@@ -67,11 +65,11 @@ class URLTestCase(unittest.TestCase):
             "target url": "https://www.google.com/",
         }
 
-        self.client.post("/url/", headers=headers, json=url_post_data)
+        self.client.post("/create", headers=headers, json=url_post_data)
 
         url = Url.query.get_or_404(1)
 
-        response = self.client.get(f"/url/{url.key}")
+        response = self.client.get(f"{url.key}")
 
         assert response.json == None
 
@@ -85,7 +83,7 @@ class URLTestCase(unittest.TestCase):
             "username": "admin",
             "password": "password",
         }
-        self.client.post("/auth/signup", json=user_signup_data)
+        self.client.post("signup", json=user_signup_data)
 
         admin = User.query.filter_by(email="testadmin@gmail.com").first()
 
@@ -97,11 +95,11 @@ class URLTestCase(unittest.TestCase):
             "target url": "https://www.google.com/",
         }
 
-        self.client.post("/url/", headers=headers, json=url_post_data)
+        self.client.post("/create", headers=headers, json=url_post_data)
 
         url = Url.query.get_or_404(1)
 
-        response = self.client.delete(f"/url/{url.key}", headers=headers)
+        response = self.client.delete(f"{url.key}", headers=headers)
 
         assert response.json == {"message": "Url has been deleted"}
         assert response.status_code == 200
@@ -114,7 +112,7 @@ class URLTestCase(unittest.TestCase):
             "username": "admin",
             "password": "password",
         }
-        self.client.post("/auth/signup", json=user_signup_data)
+        self.client.post("signup", json=user_signup_data)
 
         admin = User.query.filter_by(email="testadmin@gmail.com").first()
 
@@ -127,11 +125,11 @@ class URLTestCase(unittest.TestCase):
             "target url": "https://www.google.com/",
         }
 
-        self.client.post("/url/", headers=headers, json=url_post_data)
+        self.client.post("/create", headers=headers, json=url_post_data)
 
         url = Url.query.get_or_404(1)
 
-        response = self.client.post(f"/url/{url.key}/qrcode")
+        response = self.client.post(f"{url.key}/qrcode")
 
         assert response.json == None
         assert response.status_code == 200

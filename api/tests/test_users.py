@@ -29,7 +29,7 @@ class UserTestCase(unittest.TestCase):
             "username": "admin",
             "password": "password",
         }
-        self.client.post("/auth/signup", json=user_signup_data)
+        self.client.post("signup", json=user_signup_data)
 
         admin = User.query.filter_by(email="testadmin@gmail.com").first()
 
@@ -39,7 +39,7 @@ class UserTestCase(unittest.TestCase):
 
         headers = {"Authorization": f"Bearer {token}"}
 
-        response = self.client.get("/user/", headers=headers)
+        response = self.client.get("users", headers=headers)
         assert response.status_code == 200
         assert len(response.json) == 1
 
@@ -52,7 +52,7 @@ class UserTestCase(unittest.TestCase):
             "password": "password",
         }
 
-        self.client.post("/auth/signup", json=admin_signup_data)
+        self.client.post("signup", json=admin_signup_data)
 
         admin = User.query.filter_by(email="testadmin@gmail.com").first()
 
@@ -77,7 +77,7 @@ class UserTestCase(unittest.TestCase):
             "password": "password",
         }
 
-        self.client.post("/auth/signup", json=admin_signup_data)
+        self.client.post("signup", json=admin_signup_data)
 
         admin = User.query.filter_by(email="testadmin@gmail.com").first()
 
@@ -101,7 +101,7 @@ class UserTestCase(unittest.TestCase):
             "username": "admin",
             "password": "password",
         }
-        self.client.post("/auth/signup", json=admin_signup_data)
+        self.client.post("signup", json=admin_signup_data)
 
         admin = User.query.filter_by(email=configuration("EMAIL")).first()
 
@@ -123,7 +123,7 @@ class UserTestCase(unittest.TestCase):
             "username": "admin",
             "password": "password",
         }
-        self.client.post("/auth/signup", json=user_signup_data)
+        self.client.post("signup", json=user_signup_data)
 
         admin = User.query.filter_by(email="testadmin@gmail.com").first()
 
@@ -137,7 +137,7 @@ class UserTestCase(unittest.TestCase):
             "target url": "https://www.google.com/",
         }
 
-        self.client.post("/url/", headers=headers, json=url_post_data)
+        self.client.post("/create", headers=headers, json=url_post_data)
 
         response = self.client.get("/user/1/urls", headers=headers)
 
@@ -153,7 +153,7 @@ class UserTestCase(unittest.TestCase):
             "username": "admin",
             "password": "password",
         }
-        self.client.post("/auth/signup", json=user_signup_data)
+        self.client.post("signup", json=user_signup_data)
 
         admin = User.query.filter_by(email="testadmin@gmail.com").first()
 
@@ -163,7 +163,7 @@ class UserTestCase(unittest.TestCase):
 
         headers = {"Authorization": f"Bearer {token}"}
 
-        response = self.client.patch("/user/1/paid_remove", headers=headers)
+        response = self.client.patch("1/paid_remove", headers=headers)
 
         assert response.status_code == 200
 
@@ -179,7 +179,7 @@ class UserTestCase(unittest.TestCase):
         }
         self.client.post("/auth/signup", json=user_signup_data)
 
-        response = self.client.patch("/user/confirm/paid_remove")
+        response = self.client.patch("confirm/paid_remove")
 
         assert response.status_code == 498
 
@@ -195,11 +195,9 @@ class UserTestCase(unittest.TestCase):
             "username": "admin",
             "password": "password",
         }
-        self.client.post("/auth/signup", json=user_signup_data)
+        self.client.post("signup", json=user_signup_data)
         reset_password_data = {"email": "testadmin@gmail.com"}
-        response = self.client.post(
-            "/user/reset_password_request", json=reset_password_data
-        )
+        response = self.client.post("reset_password_request", json=reset_password_data)
         assert response.json == {
             "message": "Password Reset Email sent. Check your email"
         }
@@ -213,14 +211,12 @@ class UserTestCase(unittest.TestCase):
             "username": "admin",
             "password": "password",
         }
-        self.client.post("/auth/signup", json=user_signup_data)
+        self.client.post("signup", json=user_signup_data)
         change_password_data = {
             "new_password": "password",
             "confirm_password": "password",
         }
-        response = self.client.put(
-            "/user/reset_password/token", json=change_password_data
-        )
+        response = self.client.put("reset_password/token", json=change_password_data)
 
         assert response.status_code == 498
 
