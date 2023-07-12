@@ -21,9 +21,10 @@
   </ul>
  
 ### Live app version
-.....
+Visit [website](https://scissor-g3ga.onrender.com/)
 #### Super administrator auth details on live app
-.......
+email - admin@admin.com
+password - admin
  <p align="right"><a href="#readme-top">back to top</a></p>
 
 
@@ -41,6 +42,7 @@ Brief is the new black, this is what inspires the team at Scissor. In today's wo
 ### Technologies Used
 - Python
 - Flask
+- PostgeSQL
  <p align="right"><a href="#readme-top">back to top</a></p>
 
 
@@ -52,16 +54,66 @@ Brief is the new black, this is what inspires the team at Scissor. In today's wo
 - [Flask Mail](https://pythonhosted.org/Flask-Mail/) - sending emails
 - [Flask Caching](https://flask-caching.readthedocs.io/en/latest/) - Database Cache layering
 - [Flask Limiter](https://flask-limiter.readthedocs.io/en/stable/) - Rate limiting
+- [Flask CORS](https://flask-cors.readthedocs.io/en/latest/) - Handle Cross Origin Resource Sharing
 <p align="right"><a href="#readme-top">back to top</a></p>
 
 
 ## To run on your local machine
 ### To run the development environment on your local machine
-.....
+Clone the repository
+```console
+git clone https://github.com/PromPromm/scissor
+```
+Navigate into the project folder
+```console
+cd scissor
+```
+Create a virtual envionment
+```console
+python -m venv env
+```
+Activate the virtual envionment
+
+Windows : ```source env/scripts/activate```
+
+Linux or mac : ```source env/bin/activate```
+
+Install the required dependencies
+```console
+pip install -r requirements.txt
+```
+Navigate to `runserver.py` and change line 4 to:
+```console
+app = create_app(config=config_dict["dev"])
+```
+Save and close the file
+
+Create a `FLASK_APP` environment variable
+```console
+export FLASK_APP=runserver.py
+```
+Create a `.env` file in the project diectory `scissor` by running:
+```console
+touch .env
+```
+Copy the contents of `.env.example` file into the `.env` file and edit each environment variable to the correct values
+Save and close the file.
+##### The DOMAIN_URL for the development environment is "http://localhost:5000"
+Intanstiate Database
+```console
+flask db upgrade
+```
+Run the app
+```console
+python runserver.py
+```
  <p align="right"><a href="#readme-top">back to top</a></p>
 
 ### To run the Test environment on your local machine
-....
+Run pytest in the terminal
+```console
+pytest
+```
  <p align="right"><a href="#readme-top">back to top</a></p>
 
 ## Contact
@@ -74,34 +126,35 @@ Promise - promiseanuoluwa@gmail.com
 ### Auth Endpoints
 | ROUTE | METHOD | DESCRIPTION | AUTHORIZATION  | USER TYPE |  
 | ------- | ----- | ------------ | ------|------- |
-|  `/auth/signup` | _POST_ | To create an account   | ---- | Any | 
-|  `/auth/login` |  _POST_  | To authenticate users   | ---- | Any | 
-|  `/auth/refresh` |  _POST_  | Generate refresh token  | Authenticated | Any | 
-|  `/auth/logout` |  _DELETE_  | Logout user and revoke JWT access token | Authenticated | Any | 
+|  `/signup` | _POST_ | To create an account   | ---- | Any | 
+|  `/login` |  _POST_  | To authenticate users   | ---- | Any | 
+|  `/refresh` |  _POST_  | Generate refresh token  | Authenticated | Any | 
+|  `/logout` |  _DELETE_  | Logout user and revoke JWT access token | Authenticated | Any | 
  <p align="right"><a href="#readme-top">back to top</a></p>
 
 
 ### URL Endpoints
 | ROUTE | METHOD | DESCRIPTION | AUTHORIZATION  | USER TYPE |  VARIABLE RULE | 
 | ------- | ----- | ------------ | ------|------- | ----- |
-|  `/url` |  _POST_  | Shorten a URL  | Authenticated | Any | ---- |
-|  `/url/<url_key>/qrcode` |  _POST_  | Generate qrcode for a shortened URL   | Authenticated | Any | URL key |
-|  `/url/<url_key>` |  _GET_  | Redirect a short URL to target URL   | ---- | Any | URL key |
-|  `/url/<url_key>` |  _DELETE_  | Delete a shortened URL   | Authenticated | Any | URL key |
+|  `/create` |  _POST_  | Shorten a URL  | Authenticated | Any | ---- |
+|  `/<url_key>/qrcode` |  _POST_  | Generate qrcode for a shortened URL   | Authenticated | Any | URL key |
+|  `/<url_key>` |  _GET_  | Redirect a short URL to target URL   | ---- | Any | URL key |
+|  `/<url_key>` |  _DELETE_  | Delete a shortened URL   | Authenticated | Any | URL key |
  <p align="right"><a href="#readme-top">back to top</a></p>
 
 
 ### User Endpoints
 | ROUTE | METHOD | DESCRIPTION | AUTHORIZATION  | USER TYPE |  PLACEHOLDER | 
 | ------- | ----- | ------------ | ------|------- | ----- |
-|  `/user` |  _GET_  | Retrieve all users  | Authenticated | Admin | ---- |
+|  `/users` |  _GET_  | Retrieve all users  | Authenticated | Admin | ---- |
 |  `/user/<user_id>` |  _GET_  | Retrieve user by unique identifier | Authenticated | Admin | User ID |
 |  `/user/<user_id>` |  _DELETE_  | Delete a user by unique identifier | Authenticated | Admin | User ID |
-|  `/user/<user_id>/<token>` |  _PUT_  | User password reset | ---- | Any | User ID, Token |
-|  `/user/confirm/<token>` |  _PATCH_  | Confirm email  | ---- | Any | Token |
-|  `/user/reset_password_request` |  _POST_  | Password Reset Email Request  | ---- | Any | ---- |
-|  `/user/<user_id>/paid` |  _PATCH_  | Give user paid privileges  | Authenticated | Admin | User ID |
-|  `/user/<user_id>/paid_remove` |  _PATCH_  | Revoke user paid privileges  | Authenticated | Admin | User ID |
+|  `/user/<user_id>/urls` |  _GET_  | Get all urls by a user by unique identifier | Authenticated | Admin | User ID |
+|  `/reset_password/<token>` |  _PUT_  | User password reset | ---- | Any | User ID, Token |
+|  `/confirm/<token>` |  _PATCH_  | Confirm email  | ---- | Any | Token |
+|  `/reset_password_request` |  _POST_  | Password Reset Email Request  | ---- | Any | ---- |
+|  `/<user_id>/paid` |  _PATCH_  | Give user paid privileges  | Authenticated | Admin | User ID |
+|  `/<user_id>/paid_remove` |  _PATCH_  | Revoke user paid privileges  | Authenticated | Admin | User ID |
 |  `/user/<user_id>` |  _PATCH_  | Give or Revoke admin privileges  | Authenticated | Super-Admin | User ID |
  <p align="right"><a href="#readme-top">back to top</a></p>
 
