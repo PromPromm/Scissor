@@ -1,4 +1,4 @@
-from flask_restx import Namespace, Resource, fields
+from flask_restx import Namespace, Resource, fields, marshal
 from flask import abort, request, redirect, send_file
 from ..models.users import User
 from ..models.urls import Url
@@ -73,12 +73,28 @@ class CreateURLView(Resource):
         return {"Short URL": f"{DOMAIN + '/' + url.key}"}, HTTPStatus.CREATED
 
 
+@url_namespace.route("<string:url_key>/click")
+class URLClickView(Resource):
+    @url_namespace.doc(
+        description="Update the number", params={"url_key": "The shortened url key"}
+    )
+    def get(self, url_key):
+        url = Url.get_by_key(url_key)
+
+        # check if url exists
+        if url:
+            url.clicks += 1
+            db.session.commit()
+            return marshal(url, url_model), HTTPStatus.OK
+        return {"message": "NOT FOUND"}, HTTPStatus.NOT_FOUND
+
+
 @url_namespace.route("<string:url_key>")
 class SingleURLView(Resource):
     @url_namespace.doc(
         description="Redirect a URL", params={"url_key": "The shortened url key"}
     )
-    @limiter.limit("5/minute")
+    @limiter.limit("10/minute")
     @cache.cached(timeout=18000)
     def get(self, url_key):
         """
@@ -88,10 +104,7 @@ class SingleURLView(Resource):
 
         # check if url exists
         if url:
-            url.clicks += 1
-            db.session.commit()
-            app.logger.info(f"{url.key} got a redirect")
-            return redirect(url.target_url)
+            return marshal(url, url_model), HTTPStatus.OK
         return {"message": "NOT FOUND"}, HTTPStatus.NOT_FOUND
 
     @url_namespace.doc(
