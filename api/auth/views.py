@@ -1,4 +1,4 @@
-from flask_restx import Namespace, Resource, fields
+from flask_restx import Namespace, Resource, fields, marshal
 from flask import request, abort, url_for, copy_current_request_context
 from ..models.users import User
 from ..models.blocklist import TokenBlocklist
@@ -39,6 +39,24 @@ login_model = auth_namespace.model(
         "email": fields.String(required=True, description="Email"),
         "password": fields.String(required=True, description="Password"),
     },
+)
+
+user_model = auth_namespace.model(
+    "user",
+    {
+        "id": fields.Integer(),
+        "username": fields.String(required=True, description="Username"),
+        "email": fields.String(required=True, description="Email"),
+        "first_name": fields.String(required=True, description="Firstname"),
+        "last_name": fields.String(required=True, description="Lastname"),
+        "paid": fields.Boolean(description="User subscription status"),
+        "date_created": fields.DateTime(description="Date user joined"),
+    },
+)
+
+user_base_model = auth_namespace.model(
+    "User Base",
+    {"id": fields.Integer(dump_only=True), "email": fields.String(required=True)},
 )
 
 
@@ -110,7 +128,10 @@ class SignUp(Resource):
         app.logger.info(f"Sign up email was sent to User {new_user.username}")
         db.session.commit()
         app.logger.info(f"User {new_user.username} signed up")
-        return {"message": "User successfully created"}, HTTPStatus.CREATED
+        return {
+            "message": "User successfully created",
+            "data": marshal(user, user_base_model),
+        }, HTTPStatus.CREATED
 
 
 @auth_namespace.route("login")
@@ -151,6 +172,7 @@ class Login(Resource):
             return {
                 "access_token": access_token,
                 "refresh_token": refresh_token,
+                "data": marshal(user, user_model),
             }, HTTPStatus.OK
         app.logger.info("User tried to login with incorrect details")
         return {"Error": "Invalid credentials"}, HTTPStatus.FORBIDDEN

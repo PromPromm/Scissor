@@ -159,5 +159,5 @@ class QRCodeGenerationView(Resource):
             buffer.seek(0)
             response = send_file(buffer, mimetype="image/png")
             app.logger.info(f"Qrcode for {url_key} was generated")
-            return response
+            return {"response": response, "data": marshal(url, url_model)}
         return {"message": "NOT FOUND"}, HTTPStatus.NOT_FOUND
