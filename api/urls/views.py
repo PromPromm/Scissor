@@ -78,7 +78,7 @@ class URLClickView(Resource):
     @url_namespace.doc(
         description="Update the number", params={"url_key": "The shortened url key"}
     )
-    def get(self, url_key):
+    def put(self, url_key):
         url = Url.get_by_key(url_key)
 
         # check if url exists
