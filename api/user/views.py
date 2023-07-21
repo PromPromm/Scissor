@@ -185,7 +185,7 @@ class UserURLsList(Resource):
         This route can be accessed by an admin or the user whose id is in the user_id variable of the url.""",
         params={"user_id": "The user id"},
     )
-    @cache.cached(timeout=3600)
+    @cache.cached(timeout=300)
     def get(self, user_id):
         """
         Get a user's url history
@@ -270,7 +270,7 @@ class ConfirmEmailView(Resource):
 class ResetPasswordRequest(Resource):
     @user_namespace.expect(password_reset_request_model)
     @user_namespace.doc(description="Reset Password Request on Scissor")
-    @limiter.limit("1/day")  #Comment this line out when testing
+    @limiter.limit("2/day")  # Comment this line out when testing
     def post(self):
         """
         Request a password reset email

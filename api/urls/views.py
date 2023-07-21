@@ -17,9 +17,19 @@ url_namespace = Namespace("url", "Namespace for urls")
 url_model = url_namespace.model(
     "url",
     {
-        "name": fields.String(description="Name of shortened url"),
-        "target url": fields.String(description="Target URL"),
+        "target_url": fields.String(description="Target URL"),
         "key": fields.String(description="The new string for url"),
+    },
+)
+
+url_marshal_model = url_namespace.model(
+    "url_data",
+    {
+        "name": fields.String(description="Name of shortened url"),
+        "target_url": fields.String(description="Target URL"),
+        "key": fields.String(description="The new string for url"),
+        "clicks": fields.Integer(),
+        "date_created": fields.DateTime(),
     },
 )
 
@@ -85,7 +95,7 @@ class URLClickView(Resource):
         if url:
             url.clicks += 1
             db.session.commit()
-            return marshal(url, url_model), HTTPStatus.OK
+            return marshal(url, url_marshal_model), HTTPStatus.OK
         return {"message": "NOT FOUND"}, HTTPStatus.NOT_FOUND
 
 
@@ -104,7 +114,7 @@ class SingleURLView(Resource):
 
         # check if url exists
         if url:
-            return marshal(url, url_model), HTTPStatus.OK
+            return marshal(url, url_marshal_model), HTTPStatus.OK
         return {"message": "NOT FOUND"}, HTTPStatus.NOT_FOUND
 
     @url_namespace.doc(
@@ -159,5 +169,5 @@ class QRCodeGenerationView(Resource):
             buffer.seek(0)
             response = send_file(buffer, mimetype="image/png")
             app.logger.info(f"Qrcode for {url_key} was generated")
-            return {"response": response, "data": marshal(url, url_model)}
+            return response
         return {"message": "NOT FOUND"}, HTTPStatus.NOT_FOUND
